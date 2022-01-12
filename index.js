@@ -4,9 +4,9 @@ const redis = require("redis");
 const client = redis.createClient({url: process.env.REDIS_URL});
 
 exports.handler = async (event, context, callback) => {
-    let lineupUrl = "https://festigram.app/site/festivals/Coachella/2020"
+    let lineupUrl = "https://bigearsfestival.org/2022-festival/"
     let responseCode = 200;
-    console.log("request: " + JSON.stringify(event));
+    //console.log("request: " + JSON.stringify(event));
 
     if(event.Records && event.Records[0] && event.Records[0].Sns && event.Records[0].Sns.Message) {
     	try {
@@ -24,7 +24,9 @@ exports.handler = async (event, context, callback) => {
   let browser = null;
 
   try {
-  	await chromium.font('./.fonts/NotoColorEmoji.ttf');
+    //console.log('about to get font')
+  	await chromium.font('/opt/nodejs/.fonts/NotoColorEmoji.ttf');
+    //console.log('about to launch')
     browser = await chromium.puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
@@ -35,6 +37,7 @@ exports.handler = async (event, context, callback) => {
 
     let page = await browser.newPage();
 
+    //console.log('about to navigate to ' + lineupUrl)
     await page.goto(lineupUrl);
 
     result = await page.title();
@@ -45,9 +48,11 @@ exports.handler = async (event, context, callback) => {
       await browser.close();
     }
   }
-  console.log('Spidey sensed', result)
+  //console.log('Spidey sensed', result)
+  await client.connect()
   await client.set(leKey, JSON.stringify(result), {
 		EX: 3600 * 24 * 30
 	})
+	client.quit()
   return callback(null, result);
 };
